@@ -34,5 +34,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/bartmorse-v/lions-den-typeform-sync.git
           git add .typeform_sync_state.json
-          git diff --staged --quiet || git commit -m "chore: update sync state"
-          git push
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update sync state"
+            git push
+          fi
