@@ -126,7 +126,7 @@ def multi_select(values, mapping=None):
     return result
 
 
-def build_notion_payload(fields: dict, submitted_at: str) -> dict:
+def build_notion_payload(fields: dict, submitted_at: str, is_partial: bool = False) -> dict:
     first = fields.get("first_name") or ""
     last  = fields.get("last_name") or ""
     name  = f"{first} {last}".strip() or "Unknown"
@@ -134,7 +134,7 @@ def build_notion_payload(fields: dict, submitted_at: str) -> dict:
     properties: dict = {
         "Name":           {"title": [{"text": {"content": name}}]},
         "Stage":          {"select": {"name": "New Lead"}},
-        "Response Type":  {"select": {"name": "Completed"}},
+        "Response Type":  {"select": {"name": "Partial" if is_partial else "Completed"}},
         "Submitted":      {"date": {"start": submitted_at}},
     }
 
@@ -199,8 +199,9 @@ def main():
             continue
 
         fields       = extract_fields(resp)
-        submitted_at = resp.get("submitted_at", datetime.now(timezone.utc).isoformat())
-        payload      = build_notion_payload(fields, submitted_at)
+        submitted_at = resp.get("submitted_at") or resp.get("landed_at") or datetime.now(timezone.utc).isoformat()
+        is_partial   = resp.get("submitted_at") is None
+        payload      = build_notion_payload(fields, submitted_at, is_partial)
 
         try:
             page_id = create_notion_page(payload)
